@@ -1,7 +1,27 @@
 import pygame
 import sys
 
-invaders = 16
+SCREEN_WIDTH = 640
+SCREEN_HEIGHT = 480
+CANNON_START_X = 300
+CANNON_START_Y = 430
+CANNON_MOVE_SPEED = 2
+CANNON_LIMIT_LEFT = 0
+CANNON_LIMIT_RIGHT = 592
+BEAM_START_Y = 430
+BEAM_MOVE_SPEED = -2
+INVADER_START_X = 20
+INVADER_START_Y = 50
+INVADER_MOVE_X = 1
+INVADER_MOVE_Y = 50
+BEAM_X_OFFSET = 24
+INVEADER_NUM = 16
+INVADER_SPACING_X = 50
+INVADER_PER_ROW = 8
+INVADER_LIMIT_LEFT = 0
+INVADER_LIMIT_RIGHT = 592
+
+invaders = INVEADER_NUM
 invader_list =[0] * invaders
 
 class Cannon(pygame.sprite.Sprite):
@@ -9,11 +29,11 @@ class Cannon(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load(name)
         self.rect = self.image.get_rect()
-        self.rect.x = 300
-        self.rect.y = 430
+        self.rect.x = CANNON_START_X
+        self.rect.y = CANNON_START_Y
         self.move = 0
-        self.limit_right = 592
-        self.limit_left = 0
+        self.limit_right = CANNON_LIMIT_RIGHT
+        self.limit_left = CANNON_LIMIT_LEFT
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
@@ -24,7 +44,7 @@ class Beam(pygame.sprite.Sprite):
         self.sound_hit = pygame.mixer.Sound("hit.wav")
         self.image = pygame.image.load(name)
         self.rect = self.image.get_rect()
-        self.rect.y = 430
+        self.rect.y = BEAM_START_Y
         self.move = 0
         self.state = False
     def draw(self, screen):
@@ -35,12 +55,12 @@ class Invader(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load(name)
         self.rect = self.image.get_rect()
-        self.rect.x = 20 + invader_no % 8 * 50
-        self.rect.y = 50 + int(invader_no / 8) * 50
-        self.movex = 1
-        self.movey = 50
-        self.limit_right = 592
-        self.limit_left = 0
+        self.rect.x = INVADER_START_X + invader_no % INVADER_PER_ROW * INVADER_SPACING_X
+        self.rect.y = INVADER_START_Y + int(invader_no / INVADER_PER_ROW) * INVADER_MOVE_Y
+        self.movex = INVADER_MOVE_X
+        self.movey = INVADER_MOVE_Y
+        self.limit_right = INVADER_LIMIT_RIGHT
+        self.limit_left = INVADER_LIMIT_LEFT
         self.damage = False
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -49,7 +69,7 @@ def main():
     pygame.init()
     # TODO:スクリーンサイズを変更できるようにする フルスクリーンも可能にする
     screen = pygame.display.set_mode((640,480)) # windowの表示
-    pygame.display.set_caption("Invader Style") # タイトルの表示
+    pygame.display.set_caption("Invader Style")
     score_value = 0
     gameover = False
     cannon = Cannon("cannon.png")
@@ -83,11 +103,13 @@ def main():
             game_stop()
         pygame.time.wait(4)
 
+        # プレイヤー操作と玉の発射
         for event in pygame.event.get():
             # ×が押された場合、windowsの表示を終了する
             if event.type == pygame.QUIT:
                 exit_game()
 
+            # キーボード入力
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     cannon.move = -2
@@ -98,7 +120,7 @@ def main():
                         beam.state = True
                         beam.sound_shot.play()
                         beam.move = -2
-                        beam.rect.x = cannon.rect.x + 24
+                        beam.rect.x = cannon.rect.x + 24 #弾の位置をキャノンの真上あたりにセット(24はピクセル数)
             
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
@@ -131,6 +153,7 @@ def main():
                     gameover = True
             turn = False
 
+        # 衝突判定
         for invader_no in range(invaders):
             if beam.state == True and pygame.sprite.collide_rect(beam, invader_list[invader_no]) == True and invader_list[invader_no].damage == False:
                 beam.sound_hit.play()
